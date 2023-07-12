@@ -512,13 +512,23 @@ class Corr:
         return (self + T_partner) / 2
 
     def deriv(self, variant="symmetric"):
-        """Return the first derivative of the correlator with respect to x0.
+        r"""Return the first derivative of the correlator with respect to x0.
 
         Parameters
         ----------
         variant : str
             decides which definition of the finite differences derivative is used.
-            Available choice: symmetric, forward, backward, improved, log, default: symmetric
+            Available choice:
+            - symmetric: (default)
+                $$\tilde{\partial}_0 f(x_0) = \frac{f(x_0+1)-f(x_0-1)}{2}$$
+            - forward:
+                $$\partial_0 f(x_0) = f(x_0+1)-f(x_0)$$
+            - backward:
+                $$\partial_0 f(x_0) = f(x_0)-f(x_0-1)$$
+            - improved:
+                $$\partial_0 f(x_0) = \frac{f(x_0-2)-8f(x_0-1)+8f(x_0+1)-f(x_0+2)}{12}$$
+            - log:
+                $$\partial_0 f(x_0) = f(x_0)\tilde{\partial}_0 \log(f(x_0))$$
         """
         if self.N != 1:
             raise Exception("deriv only implemented for one-dimensional correlators.")
@@ -584,14 +594,14 @@ class Corr:
         variant : str
             decides which definition of the finite differences derivative is used.
             Available choice:
-                - symmetric (default)
+                - symmetric: (default)
                     $$\tilde{\partial}^2_0 f(x_0) = f(x_0+1)-2f(x_0)+f(x_0-1)$$
-                - big_symmetric
+                - big_symmetric:
                     $$\partial^2_0 f(x_0) = \frac{f(x_0+2)-2f(x_0)+f(x_0-2)}{4}$$
-                - improved
-                    $$\partial^2_0 f(x_0) = \frac{-f(x_0+2) + 16 * f(x_0+1) - 30 * f(x_0) + 16 * f(x_0-1) - f(x_0-2)}{12}$$
-                - log
-                    $$f(x) = \tilde{\partial}^2_0 log(f(x_0))+(\tilde{\partial}_0 log(f(x_0)))^2$$
+                - improved:
+                    $$\partial^2_0 f(x_0) = \frac{-f(x_0+2) + 16 f(x_0+1) - 30 f(x_0) + 16 f(x_0-1) - f(x_0-2)}{12}$$
+                - log:
+                    $$f(x) = \tilde{\partial}^2_0 \log(f(x_0))+(\tilde{\partial}_0 \log(f(x_0)))^2$$
         """
         if self.N != 1:
             raise Exception("second_deriv only implemented for one-dimensional correlators.")
@@ -640,17 +650,26 @@ class Corr:
             raise Exception("Unknown variant.")
 
     def m_eff(self, variant='log', guess=1.0):
-        """Returns the effective mass of the correlator as correlator object
+        r"""Returns the effective mass of the correlator as correlator object
 
         Parameters
         ----------
         variant : str
-            log : uses the standard effective mass log(C(t) / C(t+1))
-            cosh, periodic : Use periodicitiy of the correlator by solving C(t) / C(t+1) = cosh(m * (t - T/2)) / cosh(m * (t + 1 - T/2)) for m.
-            sinh : Use anti-periodicitiy of the correlator by solving C(t) / C(t+1) = sinh(m * (t - T/2)) / sinh(m * (t + 1 - T/2)) for m.
-            See, e.g., arXiv:1205.5380
-            arccosh : Uses the explicit form of the symmetrized correlator (not recommended)
-            logsym: uses the symmetric effective mass log(C(t-1) / C(t+1))/2
+            - log: (default) uses the standard effective mass
+                $$m_{\rm eff} = log(C(t) / C(t+1))$$
+            - cosh, periodic : Use periodicitiy of the correlator by solving
+                $$C(t) / C(t+1) = cosh(m * (t - T/2)) / cosh(m * (t + 1 - T/2))$$
+                for m.
+            - sinh:
+                Use anti-periodicitiy of the correlator by solving 
+                $$C(t) / C(t+1) = sinh(m * (t - T/2)) / sinh(m * (t + 1 - T/2))$$
+                for m.
+                See, e.g., arXiv:`1205.5380`
+            - arccosh:
+                Uses the explicit form of the symmetrized correlator (not recommended)
+            - logsym:
+                uses the symmetric effective mass
+                $$log(C(t-1) / C(t+1))/2$$
         guess : float
             guess for the root finder, only relevant for the root variant
         """
