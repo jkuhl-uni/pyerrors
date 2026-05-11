@@ -250,7 +250,7 @@ def _extract_flowed_energy_density(path, prefix, dtr_read, xmin, spatial_extent,
     dtr_read : int
         Determines how many trajectories should be skipped
         when reading the ms.dat files.
-        Corresponds to dtr_cnfg / dtr_ms in the openQCD input file.
+        Corresponds to dtr_cnfg / dtr_ms (dncnfg / dnms) in the openQCD input file.
     xmin : int
         First timeslice where the boundary
         effects have sufficiently decayed.
@@ -358,8 +358,8 @@ def _extract_flowed_energy_density(path, prefix, dtr_read, xmin, spatial_extent,
                 if (len(t) < 4):
                     break
                 nc = struct.unpack('i', t)[0]
-                configlist[-1].append(nc)
-
+                if nc % dtr_read == 0:
+                    configlist[-1].append(nc)
                 t = fp.read(8 * tmax * (nn + 1))
                 if kwargs.get('plaquette'):
                     if nc % dtr_read == 0:
