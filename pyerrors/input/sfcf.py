@@ -202,6 +202,9 @@ def read_sfcf_multi(path, prefix, name_list, quarks_list=None, corr_type_list=No
         raise FileNotFoundError('No replica found in directory')
     if not silent:
         print('Read', part, 'part of', name_list, 'from', prefix[:-1], ',', replica, 'replica')
+    r_start = kwargs.get('r_start', [0]*replica)
+    r_stop = kwargs.get('r_stop', [-1]*replica)
+    r_step = kwargs.get('r_step', [1]*replica)
 
     if 'names' in kwargs:
         new_names = kwargs.get('names')
@@ -372,7 +375,7 @@ def read_sfcf_multi(path, prefix, name_list, quarks_list=None, corr_type_list=No
             for rep, file in enumerate(name_ls):
                 rep_idl = []
                 filename = path + '/' + file
-                T, rep_idl, rep_data = _read_append_rep(filename, pattern, intern[name]['b2b'], im, intern[name]['single'], cfg_func, cfg_func_args)
+                T, rep_idl, rep_data = _read_append_rep(filename, pattern, intern[name]['b2b'], im, intern[name]['single'], cfg_func, cfg_func_args, r_start[rep], r_stop[rep], r_step[rep])
                 if rep == 0:
                     intern[name]['T'] = T
                     for _ in range(intern[name]['T']):
@@ -665,7 +668,7 @@ def _read_chunk_structure(chunk, pattern, b2b):
     return gauge_line, corr_line, start_read, T
 
 
-def _read_append_rep(filename, pattern, b2b, im, single, idl_func, cfg_func_args):
+def _read_append_rep(filename, pattern, b2b, im, single, idl_func, cfg_func_args, rep_start, rep_stop, rep_step):
     with open(filename) as fp:
         content = fp.readlines()
         chunk_start_lines = []
@@ -696,9 +699,10 @@ def _read_append_rep(filename, pattern, b2b, im, single, idl_func, cfg_func_args
                 idl = idl_func(chunk[gauge_line], *cfg_func_args)
             except Exception as err:
                 raise Exception("Couldn't parse idl from file", filename, ", problem with chunk of lines", start + 1, "to", stop + 1) from err
-            data = _read_chunk_data(chunk, start_read, T, corr_line, b2b, pattern, im, single)
-            rep_idl.append(idl)
-            rep_data.append(data)
+            if idl > rep_start and (True if rep_stop == -1 else (idl < rep_stop+1)) and ((idl-rep_start) % rep_step) == 0:
+                data = _read_chunk_data(chunk, start_read, T, corr_line, b2b, pattern, im, single)
+                rep_idl.append(idl)
+                rep_data.append(data)
 
         data = []
 
