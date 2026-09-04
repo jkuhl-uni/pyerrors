@@ -72,7 +72,6 @@ def check_idl(idl, che):
     for c in che:
         if c not in idl:
             missing.append(c)
-    # print missing configurations such that it can directly be parsed to slurm terminal
     if not (len(missing) == 0):
         print(len(missing), "configs missing")
         miss_str = str(missing[0])
@@ -80,6 +79,16 @@ def check_idl(idl, che):
             miss_str += "," + str(i)
         print(miss_str)
     return miss_str
+
+
+def is_wanted_idl(idl, start=0, stop=-1, step=1):
+    """
+    Check like if(idl in range(start, stop, step)) but with nice defaults for idls.
+    """
+    pass_start = idl > start-1
+    pass_stop = (True if stop == -1 else (idl < stop+1))
+    pass_step = ((idl-start-1) % step) == 0
+    return (pass_start and pass_stop and pass_step)
 
 
 def check_params(path, param_hash, prefix, param_prefix="parameters_"):

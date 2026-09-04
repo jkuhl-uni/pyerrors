@@ -7,7 +7,7 @@ import warnings
 import numpy as np  # Thinly-wrapped numpy
 
 from ..obs import Obs
-from .utils import check_idl, sort_names
+from .utils import check_idl, sort_names, is_wanted_idl
 
 sep = "/"
 
@@ -131,6 +131,13 @@ def read_sfcf_multi(path, prefix, name_list, quarks_list=None, corr_type_list=No
         for one replicum with 1000 configs
     rep_string: str
         Separator of ensemble name and replicum. Example: In "ensAr0", "r" would be the separator string.
+    r_start : list[int]
+            list which contains the first config to be read for each replicum.
+    r_stop : list[int]
+        list which contains the last config to be read for each replicum.
+    r_step : list[int]
+        integer that defines a fixed step size between two measurements (in units of configs)
+        If not given, r_step=1 is assumed.
     Returns
     -------
     result: dict[list[Obs]]
@@ -292,9 +299,11 @@ def read_sfcf_multi(path, prefix, name_list, quarks_list=None, corr_type_list=No
             for cfg in sub_ls:
                 try:
                     if compact:
-                        rep_idl.append(cfg_func(cfg, *cfg_func_args))
+                        cfg_num = (cfg_func(cfg, *cfg_func_args))
                     else:
-                        rep_idl.append(int(cfg[3:]))
+                        cfg_num = (int(cfg[3:]))
+                    if is_wanted_idl(cfg_num, r_start[i], r_stop[i], r_step[i]):
+                        rep_idl.append(cfg_num)
                 except Exception as err:
                     raise Exception("Couldn't parse idl from directory, problem with file " + cfg) from err
             rep_idl.sort()
@@ -386,7 +395,7 @@ def read_sfcf_multi(path, prefix, name_list, quarks_list=None, corr_type_list=No
                 if name == name_list[0]:
                     idl.append(rep_idl)
 
-    if kwargs.get("check_configs") is True:
+    if kwargs.get("check_configs", False):
         if not silent:
             print("Checking for missing configs...")
         che = kwargs.get("check_configs")
@@ -699,7 +708,7 @@ def _read_append_rep(filename, pattern, b2b, im, single, idl_func, cfg_func_args
                 idl = idl_func(chunk[gauge_line], *cfg_func_args)
             except Exception as err:
                 raise Exception("Couldn't parse idl from file", filename, ", problem with chunk of lines", start + 1, "to", stop + 1) from err
-            if idl > rep_start and (True if rep_stop == -1 else (idl < rep_stop+1)) and ((idl-rep_start) % rep_step) == 0:
+            if is_wanted_idl(idl, rep_start, rep_stop, rep_step):
                 data = _read_chunk_data(chunk, start_read, T, corr_line, b2b, pattern, im, single)
                 rep_idl.append(idl)
                 rep_data.append(data)
